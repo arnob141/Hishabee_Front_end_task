@@ -1,9 +1,10 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Navbar } from './navbar';
 import { useAuthStore } from '@/store/auth-store';
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -12,10 +13,26 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children, title, description }: DashboardLayoutProps) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isInitialized } = useAuthStore();
+  const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
 
-  if (!isAuthenticated) {
-    redirect('/login');
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient && isInitialized && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, isInitialized, isClient, router]);
+
+  if (!isClient || !isInitialized || !isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner className="w-8 h-8" />
+      </div>
+    );
   }
 
   return (
